@@ -8,8 +8,8 @@ from numpy import cos, sqrt, sin, pi
 
 
 ## Numerical solution parameter
-span = 5                       # length of the time period over which solution is computed
-N = 60                         # number of time steps in 1 second
+span = 10                       # length of the time period over which solution is computed
+N = 110                         # number of time steps in 1 second
 t_step = 1/N    
 plot_flag = 0                   # 0 dont plot angles and position vs time
 animation_flag = 1              # 0 don't show animation
@@ -40,11 +40,7 @@ B = B_base*B_s
 
 ## Function to describe behaviur of the system
 def double_pendulum_system(state, t):
-    theta1, theta2, q, theta1_dt, theta2_dt,  q_dt = state
-    ## Generalized momentum equations
-    p_theta1 = (1/2)*m*((5/2)*l*l*theta1_dt + l*l*theta2_dt*cos(theta1-theta2)) + gamma*m*theta1_dt
-    p_theta2 = (1/2)*m*((1/2)*l*l*theta2_dt + l*l*theta1_dt*cos(theta1-theta2)) + gamma*m*theta2_dt
-    p_q = (1/2)*m*(4*q_dt + 3*l*theta1_dt*cos(theta1) + l*cos(theta2)*theta2_dt)
+    theta1, theta2, q, p_theta1, p_theta2,  p_q = state
     ## Create empty 3x63 matrix of differential equation coefficieants for generalized momentum
     deq_mat = np.eye(3,3)
     ## Fill in the matrix for the generalized momentum
@@ -68,24 +64,27 @@ def double_pendulum_system(state, t):
     ## Differential equation vector for the theta1 dot, theta2 dot, and q dot
     th1_th2_q_dt = (2/m)*np.matmul(deq_mat_inv, b)
     ## Differential equations for the generalized momentum
-    p_theta1_dt = (1/2)*m*(-l*l*theta1_dt*theta2_dt*sin(theta1-theta2) - 3*l*q_dt*theta1_dt*sin(theta1))+(3/2)*m*g*l*sin(theta1)-A*m*sin(theta1)
-    p_theta2_dt = (1/2)*m*(l*l*theta1_dt*theta2_dt*sin(theta1-theta2) - l*q_dt*theta2_dt*sin(theta2))+(1/2)*m*g*l*sin(theta2)-B*m*sin(theta2)
+    p_theta1_dt = (1/2)*m*(-l*l*th1_th2_q_dt[0]*th1_th2_q_dt[1]*sin(theta1-theta2) -\
+                 3*l*th1_th2_q_dt[2]*th1_th2_q_dt[0]*sin(theta1))+(3/2)*m*g*l*sin(theta1)-A*m*sin(theta1)
+    p_theta2_dt = (1/2)*m*(l*l*th1_th2_q_dt[0]*th1_th2_q_dt[1]*sin(theta1-theta2) - \
+                 l*th1_th2_q_dt[2]*th1_th2_q_dt[1]*sin(theta2))+(1/2)*m*g*l*sin(theta2)-B*m*sin(theta2)
     p_q_dt = 0
     return np.append(th1_th2_q_dt, [p_theta1_dt, p_theta2_dt, p_q_dt])
 
 
 ## Solve ODEs numerically
 t = arange(0,span,t_step)
-init_state = [theta1, theta2, q, theta1_dt, theta2_dt, q_dt]
+## Initial generalized momentum calculation
+p_theta1 = (1/2)*m*((5/2)*l*l*theta1_dt + l*l*theta2_dt*cos(theta1-theta2)) + gamma*m*theta1_dt
+p_theta2 = (1/2)*m*((1/2)*l*l*theta2_dt + l*l*theta1_dt*cos(theta1-theta2)) + gamma*m*theta2_dt
+p_q = (1/2)*m*(4*q_dt + 3*l*theta1_dt*cos(theta1) + l*cos(theta2)*theta2_dt)
+## initial state summary
+init_state = [theta1, theta2, q, p_theta1, p_theta2, p_q]
 state = odeint(double_pendulum_system, init_state, t)
 
 
 ## Calculate energy
-K = (1/2)*m*(state[:,5]*state[:,5]*2+(5/4)*l*l*state[:,3]*state[:,3]+(1/4)*l*l*state[:,4]*state[:,4]+\
-    l*l*state[:,3]*state[:,4]*cos(state[:,0]-state[:,1])+3*l*state[:,5]*state[:,3]*cos(state[:,0])+\
-    l*state[:,5]*cos(state[:,1])*state[:,4])+1/2*gamma*m*state[:,3]*state[:,3]+1/2*gamma*m*state[:,4]*state[:,4]
-U = 3/2*g*l*m*cos(state[:,0])+1/2*g*m*l*cos(state[:,1])-A*m*cos(state[:,0])-B*m*cos(state[:,1])
-E = K+U
+E = np.ones(len(state))
 
 ## Plot the solution
 if (plot_flag == 1):
@@ -116,7 +115,7 @@ if (animation_flag == 1):
     y2 = l*cos(state[:, 1]) + y1
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2, 2), ylim=(-2, 2))
+    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-3, 3), ylim=(-3, 3))
     ax.grid()
 
     line, = ax.plot([], [], 'o-', lw=2)
