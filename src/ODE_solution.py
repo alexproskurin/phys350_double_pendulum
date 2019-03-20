@@ -9,7 +9,7 @@ from numpy import cos, sqrt, sin, pi
 
 ## Numerical solution parameter
 span = 10                       # length of the time period over which solution is computed
-N = 110                         # number of time steps in 1 second
+N = 60                         # number of time steps in 1 second
 t_step = 1/N    
 plot_flag = 0                   # 0 dont plot angles and position vs time
 animation_flag = 1              # 0 don't show animation
@@ -31,8 +31,8 @@ q_dt = 0                        # initial acceleration of the cart
 ## Potential well modification coefficients
 A_base = (3/2)*g*l              # coefficient responsible for canceling out term with cos(theta1)
 B_base = (1/2)*g*l              # coefficient responsible for canceling out term with cos(theta2)
-A_s = 0                         # strength of the imposed potential for A
-B_s = 0                         # strength of the imposed potential for B
+A_s = 10                         # strength of the imposed potential for A
+B_s = 10                         # strength of the imposed potential for B
 ## Desired potential cancelation terms to be applied to the system
 A = A_base*A_s
 B = B_base*B_s
